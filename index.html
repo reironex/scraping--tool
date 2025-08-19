@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTML Scraper</title>
+  <style>
+    body { font-family: Arial; padding: 30px; background: #fdf0ff; }
+    h1 { color: #d633ff; }
+    input { width: 60%; padding: 10px; margin-right: 10px; border-radius: 5px; border: 1px solid #d633ff; }
+    button { padding: 10px 20px; background: #d633ff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    ul { list-style: none; padding: 0; margin-top: 20px; }
+    li { background: #ffe6ff; margin: 5px 0; padding: 10px; border-radius: 5px; }
+    .error { color: red; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>HTML Scraper Tool</h1>
+  <input type="text" id="urlInput" placeholder="Enter website URL">
+  <button id="scrapeBtn">Scrape</button>
+  <p class="error" id="error"></p>
+
+  <h2>Headings</h2>
+  <ul id="headings"></ul>
+
+  <h2>Paragraphs</h2>
+  <ul id="paragraphs"></ul>
+
+  <h2>Links</h2>
+  <ul id="links"></ul>
+
+  <script>
+    const urlInput = document.getElementById('urlInput');
+    const btn = document.getElementById('scrapeBtn');
+    const error = document.getElementById('error');
+    const headingsList = document.getElementById('headings');
+    const paragraphsList = document.getElementById('paragraphs');
+    const linksList = document.getElementById('links');
+
+    btn.addEventListener('click', async () => {
+      const url = urlInput.value.trim();
+      if (!url) {
+        error.textContent = 'Please enter a URL';
+        return;
+      }
+
+      error.textContent = '';
+      headingsList.innerHTML = '<li>Loading...</li>';
+      paragraphsList.innerHTML = '';
+      linksList.innerHTML = '';
+
+      try {
+        const res = await fetch(`/api/scrape?url=${encodeURIComponent(url)}`);
+        const data = await res.json();
+
+        if (data.error) {
+          error.textContent = data.error;
+          headingsList.innerHTML = '';
+          return;
+        }
+
+        headingsList.innerHTML = '';
+        data.headings.forEach(h => {
+          const li = document.createElement('li');
+          li.textContent = h;
+          headingsList.appendChild(li);
+        });
+
+        paragraphsList.innerHTML = '';
+        data.paragraphs.forEach(p => {
+          const li = document.createElement('li');
+          li.textContent = p;
+          paragraphsList.appendChild(li);
+        });
+
+        linksList.innerHTML = '';
+        data.links.forEach(l => {
+          const li = document.createElement('li');
+          const a = document.createElement('a');
+          a.href = l.href;
+          a.target = '_blank';
+          a.textContent = l.text || l.href;
+          li.appendChild(a);
+          linksList.appendChild(li);
+        });
+      } catch (err) {
+        console.error(err);
+        error.textContent = 'Failed to scrape website';
+        headingsList.innerHTML = '';
+        paragraphsList.innerHTML = '';
+        linksList.innerHTML = '';
+      }
+    });
+  </script>
+</body>
+</html>
